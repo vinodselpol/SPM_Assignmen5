@@ -22,6 +22,7 @@ import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
 // Import custom components
 import BarCharts from "./BarCharts";
+import LineCharts from "./LineCharts";
 import Loader from "./Loader";
 import { ListItemButton } from "@mui/material";
 
@@ -125,6 +126,7 @@ export default function Home() {
   and updates the value of gitHubrepo data.
   */
   const [githubRepoData, setGithubData] = useState([]);
+  
   // Updates the repository to newly selected repository
   const eventHandler = (repo) => {
     setRepository(repo);
@@ -228,6 +230,18 @@ export default function Home() {
         ) : (
           <div>
             {/* Render barchart component for a monthly created issues for a selected repositories*/}
+            <LineCharts
+              title={`Issues for every repo in last 1 year`}
+              data={githubRepoData?.issues}
+            />
+            <BarCharts
+              title={`Stars count for every repo`}
+              data={githubRepoData?.stars}
+            />
+            <BarCharts
+              title={`Fork count for every repo`}
+              data={githubRepoData?.fork}
+            />
             <BarCharts
               title={`Monthly Created Issues for ${repository.value} in last 1 year`}
               data={githubRepoData?.created}
@@ -237,6 +251,16 @@ export default function Home() {
               title={`Monthly Closed Issues for ${repository.value} in last 1 year`}
               data={githubRepoData?.closed}
             />
+
+            <Typography component="h5">
+                  The day of the week with Maximum issue created for <span style={{fontWeight: 'bold'}}>{repository.value}</span>  repository is <span style={{fontWeight: 'bold'}}> {githubRepoData?.max_issues_day}</span>
+                </Typography>
+            <Typography component="h4">
+                  The day of the week with Maximum issue closed for <span style={{fontWeight: 'bold'}}>{repository.value}</span>  repository is <span style={{fontWeight: 'bold'}}>{githubRepoData?.max_close_day}</span> 
+              </Typography>
+            <Typography component="h4">
+                  The month of the year which has Maximum issue closed for <span style={{fontWeight: 'bold'}}>{repository.value}</span>  repository is <span style={{fontWeight: 'bold'}}> {githubRepoData?.max_issue_month}</span> 
+              </Typography>
             <Divider
               sx={{ borderBlockWidth: "3px", borderBlockColor: "#FFA500" }}
             />
@@ -286,6 +310,7 @@ export default function Home() {
                 />
               </div>
             </div>
+
             {/* Rendering Timeseries Forecasting of Closed Issues using Tensorflow and
                 Keras LSTM  */}
             <div>
@@ -333,6 +358,55 @@ export default function Home() {
                 />
               </div>
             </div>
+            {/* Rendering Timeseries Forecasting of Pulls using Tensorflow and
+                Keras LSTM  */}
+            <div>
+            <Divider
+                sx={{ borderBlockWidth: "3px", borderBlockColor: "#FFA500" }}
+              />
+              <Typography variant="h5" component="div" gutterBottom>
+                Timeseries Forecasting of Pulls using Tensorflow and
+                Keras LSTM
+              </Typography>
+              <div>
+                <Typography component="h4">
+                  Model Loss for Pulls
+                </Typography>
+                {/* Render the model loss image for closed issues  */}
+                <img
+                  src={githubRepoData?.pullsAtImageUrls?.model_loss_image_url}
+                  alt={"Model Loss for Pulls"}
+                  loading={"lazy"}
+                />
+              </div>
+              <div>
+                <Typography component="h4">
+                  LSTM Generated Data for Pulls
+                </Typography>
+                {/* Render the LSTM generated image for closed issues */}
+                <img
+                  src={
+                    githubRepoData?.pullsAtImageUrls?.lstm_generated_image_url
+                  }
+                  alt={"LSTM Generated Data for Pulls"}
+                  loading={"lazy"}
+                />
+              </div>
+              <div>
+                <Typography component="h4">
+                  All Issues Data for Pulls
+                </Typography>
+                {/* Render the all issues data image for closed issues*/}
+                <img
+                  src={githubRepoData?.pullsAtImageUrls?.all_issues_data_image}
+                  alt={"All Issues Data for Pulls"}
+                  loading={"lazy"}
+                />
+              </div>
+            </div>
+
+
+
           </div>
         )}
       </Box>

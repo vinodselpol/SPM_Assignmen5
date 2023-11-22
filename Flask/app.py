@@ -16,6 +16,7 @@ Use Python/GitHub API to retrieve Issues/Repos information of the past 1 year fo
 '''
 # Import all the required packages 
 import os
+import datetime
 from flask import Flask, jsonify, request, make_response, Response
 from flask_cors import CORS
 import json
@@ -46,10 +47,19 @@ def build_actual_response(response):
                          "PUT, GET, POST, DELETE, OPTIONS")
     return response
 
+def convert_to_day(param):
+    day, month, year = (int(x) for x in param.split('-'))    
+    ans = datetime.date(day, month, year)
+    return ans.strftime("%A")
+
+#create a repositories to iterate the stars and count
+repositories = ["angular/angular","openai/openai-cookbook", "openai/openai-python", "openai/openai-quickstart-python","milvus-io/pymilvus", "SeleniumHQ/selenium", "golang/go", "google/go-github","angular/material","angular/angular-cli","SebastianM/angular-googlemaps","d3/d3","facebook/react","tensorflow/tensorflow","keras-team/keras","pallets/flask"]
+names =["Angular","Openai-cookbook","Openai-python","Openai-quickstart-python","Pymilvus","Selenium","Go","Go-github","Material","Angular-cli","Angular-googlemaps","D3","React","Tensorflow","Keras","Flask"]
 '''
 API route path is  "/api/forecast"
 This API will accept only POST request
 '''
+
 @app.route('/api/github', methods=['POST'])
 def github():
     body = request.get_json()
@@ -102,8 +112,8 @@ def github():
             resp = Response(json.dumps(error), mimetype='application/json')
             resp.status_code = 500
             return resp
-        if issues_items is None:
-            continue
+        # if issues_items is None:
+        #     continue
         for issue in issues_items:
             label_name = []
             data = {}
@@ -135,6 +145,20 @@ def github():
     df_created_at = df.groupby(['created_at'], as_index=False).count()
     dataFrameCreated = df_created_at[['created_at', 'issue_number']]
     dataFrameCreated.columns = ['date', 'count']
+    temp2 = dataFrameCreated.values.tolist()
+    # issues_created_df1 =[]
+    issues_created_df2 = []
+    i=0
+    while i < len(temp2):
+        data = {}
+        data['date'] = temp2[i][0]
+        data['count'] = temp2[i][1]
+        i=i+1
+        arr = [data['date'],data['count']]
+        issues_created_df2.append(arr)
+        # issues_created_df1.append(data)
+
+
 
     '''
     Monthly Created Issues
@@ -208,23 +232,288 @@ def github():
     closed_at_response = requests.post(LSTM_API_URL,
                                        json=closed_at_body,
                                        headers={'content-type': 'application/json'})
+
+                
+    #Tensorflow
+    #print("CC:", created_at_body)
     
+    created_at_response = requests.post(LSTM_API_URL,
+                                        json=created_at_body,
+                                        headers={'content-type': 'application/json'})
+
+
+    pull_request_rpnse = requests.post(LSTM_API_URL_FINAL+"api/pulls",
+                                       json=pull_request_body,
+                                       headers={'content-type': 'application/json'})
+    print("pull req res: ",pull_request_rpnse.json())
+   
+    commits_respnse = requests.post(LSTM_API_URL_FINAL+"api/commits",
+                                       json=commits_body,
+                                       headers={'content-type': 'application/json'})
+    print("commits req res: ",commits_respnse.json())
+    
+    closed_at_response = requests.post(LSTM_API_URL,
+                                       json=closed_at_body,
+                                       headers={'content-type': 'application/json'})
+    
+    #stats model
+    created_at_response_stat = requests.post(LSTM_API_URL_FINAL+"api/statmis",
+                                        json=created_at_body,
+                                        headers={'content-type': 'application/json'})
+
+    print("create req stat res: ",created_at_response_stat.json())
+
+    pull_request_rpnse_stat = requests.post(LSTM_API_URL_FINAL+"api/statmpull",
+                                       json=pull_request_body,
+                                       headers={'content-type': 'application/json'})
+
+    print("pull req stat res: ",pull_request_rpnse_stat.json())
+   
+    commits_respnse_stat = requests.post(LSTM_API_URL_FINAL+"api/statmcommits",
+                                       json=commits_body,
+                                       headers={'content-type': 'application/json'})
+
+    print("commits req stat res: ",commits_respnse_stat.json())
+    
+    closed_at_response_stat = requests.post(LSTM_API_URL_FINAL+"api/statmisc",
+                                       json=closed_at_body,
+                                       headers={'content-type': 'application/json'})
+
+    print("create req stat res: ",closed_at_response_stat.json())
+
+    
+    #fb profet api routes
+    created_at_response_fb = requests.post(LSTM_API_URL_FINAL+"api/fbprophetis",
+                                        json=created_at_body,
+                                        headers={'content-type': 'application/json'})
+
+    print("create req fb res: ",created_at_response_fb.json())
+
+    pull_request_fb_rpnse = requests.post(LSTM_API_URL_FINAL+"api/fbprophetpull",
+                                       json=pull_request_body,
+                                       headers={'content-type': 'application/json'})
+
+    print("pull req fb res: ",pull_request_fb_rpnse.json())
+   
+    commits_fb_respnse = requests.post(LSTM_API_URL_FINAL+"api/fbprophetcommits",
+                                       json=commits_body,
+                                       headers={'content-type': 'application/json'})
+
+    print("commits req res: ",commits_fb_respnse.json())
+    
+    closed_at_fb_response = requests.post(LSTM_API_URL_FINAL+"api/fbprophetisc",
+                                       json=closed_at_body,
+                                       headers={'content-type': 'application/json'})
+
+    print("create req fb res: ",closed_at_fb_response.json())
+
+    # For Stars & fork 
+    total_count = []
+    fork_count = []
+    i=0
+    for repos in repositories: 
+        query_url = GITHUB_URL + "repos/" + repos
+        # requsets.get will fetch requested query_url from the GitHub API
+        resp = requests.get(query_url, headers=headers, params=params)
+        resp = resp.json()
+        arr = [names[i],resp.get("stargazers_count")]
+        arr2 = [names[i],resp.get("forks_count")]
+        total_count.append(arr)
+        fork_count.append(arr2)
+        i=i+1
+    stars_resp = total_count
+    fork_resp = fork_count
+
+
+# For the first 3 in the lstm 
+    today = date.today()
+    last_year = today + dateutil.relativedelta.relativedelta(years=-2)
+    # To get issues for all repo
+    total_count = []
+    i=0
+    for repos in repositories: 
+        types = 'type:issue'
+        repo = 'repo:' + repos
+        ranges = 'created:' + str(last_year) + '..' + str(today)
+        search_query = types + ' ' + repo + ' ' + ranges
+        query_url = GITHUB_URL + "search/issues?q=" + search_query
+        # requsets.get will fetch requested query_url from the GitHub API
+        resp = requests.get(query_url, headers=headers, params=params)
+        resp = resp.json()
+        arr = [names[i],resp.get("total_count")]
+        total_count.append(arr)
+        i=i+1
+    issues_resp = total_count
+
+    df_temp = df.groupby(['created_at']).count().reset_index()
+    data = df_temp.sort_values('issue_number', ascending=False).head(1).iloc[0]['created_at']
+    max_issues_day = data + " " + convert_to_day(data)
+    df_temp = df.groupby(['closed_at']).count().reset_index()
+    data = df_temp.sort_values('issue_number', ascending=False).head(1).iloc[0]['closed_at']
+    max_close_day = data + " " + convert_to_day(data)
+    month = df
+    month['closed_month_year'] = pd.to_datetime(df['closed_at']).dt.to_period('M')
+    max_issue_month = month.groupby('closed_month_year').count().idxmax(axis=0, skipna = True)
+    max_issue_month = max_issue_month['created_at'].strftime('%B %F')
+
+    issues_reponse = []
+    types = 'type:pr'
+    repo : 'repo:' + repo_name
+    ranges = 'created:' + str(last_year) + '..' + str(today)
+    search_query = types + ' ' + repo + ' ' + ranges
+    query_url = GITHUB_URL + "search/issues?q=" + search_query
+    # requsets.get will fetch requested query_url from the GitHub API
+    resp = requests.get(query_url, headers=headers, params=params)
+    search_issues = resp.json()
+    issues_items = []
+    try:
+        # Extract "items" from search issues
+        issues_items = search_issues.get("items")
+    except KeyError:
+        error = {"error": "Data Not Available"}
+        resp = Response(json.dumps(error), mimetype='application/json')
+        resp.status_code = 500
+        return resp
+    for issue in issues_items:
+        label_name=[]
+        data = {}
+        current_issue = issue
+        # Get issue number
+        data['issue_number'] = current_issue["number"]
+        # Get created date of issue
+        data['created_at'] = current_issue["created_at"][0:10]
+    #    if current_issue["closed_at"] == None: data['closed_at']= current_issue["closed_at"]
+    #     else:
+    #         data['closed_at']= current_issue["closed_at"][0:10]               # Get closed date of issue
+        for label in current_issue["labels"]:
+            label_name.append(label["name"])                                  # Get label name of issue
+        data['labels']= label_name
+        data['State'] = current_issue["state"]                                # It gives state of issue like closed or open
+        data['Author'] = current_issue["user"]["login"] 
+        issues_reponse.append(data)
+
+    df2 = pd.DataFrame(issues_reponse)
+
+    df_pr_at = df2.groupby(['created_at'], as_index=False).count()
+    dataFramePullReq = df_pr_at[['created_at', 'issue_number']]
+    dataFramePullReq.columns = ['date', 'count']
+    temp3 = dataFramePullReq.values.tolist()
+    issues_pr_df3 =[]
+    i=0
+    while i < len(temp3):
+        data = {}
+        data['date'] = temp3[i][0]
+        data['count'] = temp3[i][1]
+        i=i+1
+        issues_pr_df3.append(data)
+
+
+
+    pull_at_body = {
+        "issues": issues_reponse,
+        "type": "pull_issues"
+    }
+
+    created_at_pulls_response = requests.post(LSTM_API_URL,
+                                        json=pull_at_body,
+                                        headers={'content-type': 'application/json'})
+    # build
+    query_url = GITHUB_URL + "users/" + repo_name.split("/")[0] + "/repos" 
+    page_no = 1
+    repos_data = []
+    count=0
+    while (True):
+        response = requests.get(query_url, headers=headers, params=params)
+        response = response.json()
+        repos_data = repos_data + response
+        repos_fetched = len(response)
+        if (repos_fetched == 30 and count <100):
+            page_no = page_no + 1
+            url = query_url + '?page=' + str(page_no)
+            count = count + 1
+        else:
+            break
+    repo_req = []
+    k=0
+    while k < len(repos_data):
+        url = GITHUB_URL + "repos/" + repo_name
+        if(repos_data[k]['url'] == url) :
+            repo_req.append(repos_data[k])
+        k = k+1
+    repos_info = []
+    for i, repo in enumerate(repo_req):
+        data = []
+        data.append(repo['id'])
+        data.append(repo['name'])
+        data.append(repo['description'])
+        data.append(repo['created_at'])
+        data.append(repo['updated_at'])
+        data.append(repo['owner']['login'])
+        data.append(repo['license']['name'] if repo['license'] != None else None)
+        data.append(repo['has_wiki'])
+        data.append(repo['forks_count'])
+        data.append(repo['open_issues_count'])
+        data.append(repo['stargazers_count'])
+        data.append(repo['watchers_count'])
+        data.append(repo['url'])
+        data.append(repo['commits_url'].split("{")[0])
+        data.append(repo['url'] + '/branches?')
+        data.append(repo['url'] + '/contributors')
+        data.append(repo['releases_url'])
+        data.append(repo['url'] + '/languages')
+        repos_info.append(data)
+    df = pd.DataFrame(repos_info,columns = ['Id', 'Name', 'Description', 'created_at', 'updated_at', 
+                                                        'Owner', 'License', 'has_wiki', 'forks_count', 
+                                                        'open_issues_count', 'stargazers_count', 'watchers_count',
+                                                        'url', 'commits_url','branches_url','contributors_url','releases_url', 'languages_url'])
+
     '''
     Create the final response that consists of:
         1. GitHub repository data obtained from GitHub API
         2. Google cloud image urls of created and closed issues obtained from LSTM microservice
     '''
+    """
+    Creates a JSON response with data about GitHub repository issues, pull requests, commits, etc.
+
+    Args:
+    - created_at_issues: List of issues created.
+    - week_created_at_issues: List of issues created weekly.
+    - closed_at_issues: List of issues closed.
+    - week_closed_at_issues: List of issues closed weekly.
+    - repository: Dictionary with repository data such as star and fork count.
+    - *_response_stat, *_response_fb, *_response: Response objects for various metrics.
+
+    Returns:
+    - JSON response with the aggregated data.
+    """
+
+    # Construct the JSON response
     json_response = {
+        # Basic repository statistics
         "created": created_at_issues,
+        "created_weekly": week_created_at_issues,
         "closed": closed_at_issues,
+        "closed_weekly": week_closed_at_issues,
         "starCount": repository["stargazers_count"],
         "forkCount": repository["forks_count"],
-        "createdAtImageUrls": {
-            **created_at_response.json(),
-        },
-        "closedAtImageUrls": {
-            **closed_at_response.json(),
-        },
+
+        # URLs for statistical data visualizations
+        "stat_createdAtImageUrls": created_at_response_stat.json(),
+        "stat_closedAtImageUrls": closed_at_response_stat.json(),
+        "stat_pullReqImageUrls": pull_request_rpnse_stat.json(),
+        "stat_commitsImageUrls": commits_respnse_stat.json(),
+
+        # URLs for Facebook-based data visualizations
+        "fb_createdAtImageUrls": created_at_response_fb.json(),
+        "fb_closedAtImageUrls": closed_at_fb_response.json(),
+        "fb_pullReqImageUrls": pull_request_fb_rpnse.json(),
+        "fb_commitsImageUrls": commits_fb_respnse.json(),
+
+        # URLs for general data visualizations
+        "createdAtImageUrls": created_at_response.json(),
+        "closedAtImageUrls": closed_at_response.json(),
+        "pullReqImageUrls": pull_request_rpnse.json(),
+        "commitsImageUrls": commits_respnse.json(),
     }
     # Return the response back to client (React app)
     return jsonify(json_response)
